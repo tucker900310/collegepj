@@ -1,0 +1,109 @@
+import RPi.GPIO as GPIO 
+import Adafruit_DHT
+import time
+
+GPIO.setmode(GPIO.BCM)#溫溼度感測
+
+GPIO_TRIGGER =7
+GPIO_ECHO =12
+GPIO_TEMP =4
+
+GPIO.setup(GPIO_TRIGGEER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
+sensor = Adafruit_DHT.DHT11GPIO.SETUP()
+distance0 = 0
+
+
+def send_trigger_pulse():
+    GPIO.output(GPIO_TRIGGEER, True)
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGEER,False)
+
+def get_speed():#取得音速
+    humidity, temperature = Adafruit_DHT.read_retry(sensor, GPIO_TEMP)
+    speed = 33100 + temperature * 60
+    return speed
+
+def velocity(speed):#算出速度
+    send_trigger_pulse()
+
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+
+    TimeElapsed = StopTime - StartTime
+    distance = (TimeElapsed * speed) / 2
+
+    if distance < 2 or distance > 400:
+        dist_error = True
+    else:
+	dist_error = False
+    vel = (distance - distance0) / TimeElapsed 
+    return abs(vel) 
+
+def TurnOnLED(GPIOnum):#開燈
+    GPIO.output(GPIOnum,True)
+    
+def TurnOffLED(GPIOnum):#關燈
+    GPIO.output(GPIOnum,False)
+   
+def Setup(GPIOnum,OUT_IN):#設定開關燈
+    GPIO.setmode(GPIO.BCM)
+    
+    if OUT_IN=="OUT":
+        GPIO.setup(GPIOnum,GPIO.OUT)
+    else:
+        GPIO.setup(GPIOnum,GPIO.IN)
+
+def beepOn(num):
+    GPIO.output(num, GPIO.LOW)
+    
+def beepOff(num):
+    GPIO.output(num, GPIO.HIGH)
+
+Setup(2,"OUT")
+Setup(3,"OUT")
+Setup(4,"OUT")
+beepOff(17)
+if __name__ == '__main__':
+    try:
+        speed = get_speed()
+        while True:
+	        time.sleep(1)
+            n=1
+            vel = velocity(speed)
+        if dist_error:
+                print('Range Error')
+	    else:
+                print(str(n))
+                print('Velocity:', str(vel) + ' cm/s')
+            
+
+        if (vel >20):#速度大於20
+                TurnOnLED(2)
+                TurnOffLED(3)
+                TurnOffLED(4)
+		        beepOn(17)
+                time.sleep(1)
+                beepOff(17)
+                
+        elif (vel > 10 and vel <= 20):#速度大於10小於20
+                TurnOnLED(3)
+		        TurnOffLED(2)
+                TurnOffLED(4)
+                
+        elif (vel > 5 and vel <= 10):#速度大於5小於10
+                TurnOnLED(4)
+		        TurnOffLED(2)
+                TurnOffLED(3)
+                
+        else:
+                TurnOffLED(2)
+                TurnOffLED(3)
+                TurnOffLED(4)
+            
+    except KeyboardInterrupt:
+        print("Measurement stopped by User")
+        GPIO.cleanup()
