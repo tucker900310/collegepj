@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Distance Matrix API - Google Maps API demo - August - Let's Write</title>
+  <link rel="canonical" href="https://www.letswrite.tw/google-map-api-distance-matrix/">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <!-- <script type="text/javascript" src="index.js"></script> -->
+
+
+
+</head>
+
+<body>
+
+
+
+
+  <div id="app" class="container">
+
+    <!-- 找目前地點 -->
+    <section class="row">
+      <div class="col google-map">
+        <button type="button" id="status" class="btn btn-info" v-on:click="getCurrent()">第一天</button>
+      </div>
+ 
+    </section>
+
+
+
+    <!-- google map地圖框----------------------------------------------------------------------------- -->
+    <div class="col-md-8 google-map">
+      <div id="map" class="embed-responsive embed-responsive-16by9"></div>
+    </div>
+
+    <div id="app1" class="container">
+      <div class="col google-map">
+        <button type="button" id="status" class="btn btn-info" v-on:click="getCurrent2()">第二天</button>
+      </div>
+      <div class="col-md-8 google-map">
+        <div id="map2" class="embed-responsive embed-responsive-16by9"></div>
+      </div>
+    </div>
+    <!--------------------------------------------------------------------------------------------------->
+
+    <!-- 顯示距離列表 -->
+  </div>
+
+  <!-- 將 YOUR_API_KEY 替換成你的 API Key 即可 -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBxosyX1prM5MaCmgarqJBdZHfCKPkqBg&libraries=places,drawing,geometry&v=3"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+
+
+
+</body>
+
+</html>
+
+
+<!-- map -->
+<script>
+  var map;
+  var marker = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [22.63569939033662, 120.27544493482253]
+        },
+        properties: {
+          id: 2,
+          name: "壽山動物園"
+        }
+      },
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [22.62146120928563, 120.27384520153541]
+        },
+        properties: {
+          id: 1,
+          name: "泰泰我要西子灣店"
+        }
+      },
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [22.618310324478777, 120.2661279697199]
+        },
+        properties: {
+          id: 3,
+          name: "西子灣風景區"
+        }
+      },
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [22.628670050507665, 120.28372706359046]
+        },
+        properties: {
+          id: 4,
+          name: "味味香廣東汕頭牛豬羊肉爐"
+        }
+      },
+      {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [22.622500072190277, 120.28889201773693]
+        },
+        properties: {
+          id: 5,
+          name: "高雄市立電影館"
+        }
+      }
+    ]
+  };
+  const googleMap = new Vue({
+    el: '#app',
+    data: {
+      map: null,
+      features: [] // 放地圖上的5個點
+    },
+    methods: {
+      // init google map
+      initMap() {
+        function success(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          // 預設地圖中心點
+          let location = {
+            lat: latitude,
+            lng: longitude
+          };
+
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: location,
+            zoom: 16
+          });
+        }
+
+        // 放置marker
+        navigator.geolocation.getCurrentPosition(success);
+        this.features = marker.features;
+        Array.prototype.forEach.call(this.features, r => {
+          // 寫入marker
+          let originPosition = new google.maps.LatLng(location);
+          let latLng = new google.maps.LatLng(r.geometry.coordinates[0], r.geometry.coordinates[1]);
+          let marker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+          });
+        });
+      },
+      // 抓使用者所在位置
+      getCurrent() {
+        const _this = this;
+        // 先確認使用者裝置能不能抓地點
+        if (navigator.geolocation) {
+          // 使用者不提供權限，或是發生其它錯誤
+          function error() {
+            alert('無法取得你的位置');
+          }
+
+          // 使用者允許抓目前位置，回傳經緯度
+          function success(position) {
+            // 把要計算的點存成陣列
+            var destinations = [];
+            var originplays = [];
+            //放置起點
+            originplays[0] = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+            Array.prototype.forEach.call(_this.features, f => {
+              destinations.push(new google.maps.LatLng(f.geometry.coordinates[0], f.geometry.coordinates[1]));
+            });
+
+            originPosition = originplays[0];
+            console.log(originPosition);
+            // 所在位置跟各點的距離
+
+
+
+            //設定中繼點
+            var directionsService = new google.maps.DirectionsService();
+            var directionsDisplay = new google.maps.DirectionsRenderer();
+            directionsDisplay.setMap(map);
+            let des = [];
+            Array.prototype.forEach.call(_this.features, g => {
+              des.push(new google.maps.LatLng(g.geometry.coordinates[0], g.geometry.coordinates[1]));
+            });
+            let waypts = [];
+            des.forEach((loc) => {
+              waypts.push({
+                location: loc,
+                stopover: true
+              });
+            });
+
+            //用api裡的waypoints排定中繼
+            var request = {
+              origin: originplays[0],
+              destination: des[4],
+              travelMode: 'DRIVING',
+              waypoints: waypts
+            };
+
+            directionsService.route(request, function (result, status) {
+              if (status == 'OK') {
+                // 回傳路線上每個步驟的細節
+                console.log(result.routes[0].legs[0].steps);
+                directionsDisplay.setDirections(result);F
+              } else {
+                console.log(status);
+              }
+
+            })
+
+          }
+
+          // 跟使用者拿所在位置的權限
+          navigator.geolocation.getCurrentPosition(success, error);
+        } else {
+          alert('Sorry, 你的裝置不支援地理位置功能。')
+        }
+      }
+    },
+    mounted() {
+      window.addEventListener('load', () => {
+        this.initMap();
+      });
+    }
+  })
+</script>
