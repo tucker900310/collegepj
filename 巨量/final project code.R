@@ -5,7 +5,6 @@ pacman::p_load(magrittr, readr, caTools, ggplot2, dplyr, vcd,
                sampling,ISLR,partykit) #載入套件
               
 ###資料處理
-load("Prep_steam.RData")
 steam = fread("data/steam.csv", encoding = 'UTF-8', header = T)
 #移除重複遊戲
 steam <- steam %>% group_by(name) %>% filter(!duplicated(name))
